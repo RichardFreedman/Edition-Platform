@@ -34,6 +34,11 @@ def main():
     df = pd.read_csv(CSV_PATH, dtype=str).fillna("")
     WORKS_DIR.mkdir(exist_ok=True)
 
+    # Remove stale generated pages so legacy dev IDs like work001.md do not
+    # remain and break the Jekyll build.
+    for existing in WORKS_DIR.glob("*.md"):
+        existing.unlink()
+
     for _, row in df.iterrows():
         composer = get_value(row, "composer", "composer_name")
         title = get_value(row, "title", "work_title")
