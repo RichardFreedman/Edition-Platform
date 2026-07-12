@@ -1,0 +1,16 @@
+title: MEI Music Archive
+description: Interactive catalog of encoded musical works
+
+collections:
+  works:
+    output: true
+    permalink: /works/:path/
+
+defaults:
+  - scope:
+      path: ""
+      type: works
+    values:
+      layout: work
+
+markdown: kramdown

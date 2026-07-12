@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ page.title | default: site.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    nav a { text-decoration: none; color: #06c; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd; }
+    th { cursor: pointer; }
+    input#filter { padding: 0.4rem; width: 100%; margin-top: 1rem; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <nav><a href="{{ '/' | relative_url }}">&larr; Catalog</a></nav>
+  <main>
+    {{ content }}
+  </main>
+</body>
+</html>
