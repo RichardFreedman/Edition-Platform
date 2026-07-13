@@ -26,6 +26,12 @@ layout: default
   <midi-player id="midi-player" visualizer="#notation" sound-font></midi-player>
 </div>
 
+<div id="pagination" style="display: none; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+  <button id="prev-page" type="button">&larr; Prev</button>
+  <span id="page-indicator"></span>
+  <button id="next-page" type="button">Next &rarr;</button>
+</div>
+
 <div id="notation">Loading notation&hellip;</div>
 
 <!-- Verovio: renders MEI -> SVG in the browser -->
@@ -44,13 +50,19 @@ layout: default
   let vrvToolkit;
   let currentScale = 40;
   let currentTempoPct = 100;
+  let currentPage = 1;
 
-  // Verovio's rendered SVG width is pageWidth * (scale / 100), so keep
-  // pageWidth * scale constant as the slider changes — this way only the
-  // size of the notes/staff changes, not the overall width of the notation.
+  // Verovio's rendered SVG width/height are pageWidth/pageHeight * (scale / 100),
+  // so keep pageWidth * scale and pageHeight * scale constant as the slider
+  // changes — this way only the size of the notes/staff changes, not the
+  // overall width of the notation. Since the visible page area shrinks as
+  // notes get bigger, Verovio naturally needs more pages to fit the piece,
+  // which is the pagination behavior we want tied to scale.
   const BASE_PAGE_WIDTH = 1800;
+  const BASE_PAGE_HEIGHT = 2970;
   const BASE_SCALE = 40;
   const WIDTH_WORK = BASE_PAGE_WIDTH * BASE_SCALE;
+  const HEIGHT_WORK = BASE_PAGE_HEIGHT * BASE_SCALE;
 
   const scaleSlider = document.getElementById("scale-slider");
   const scaleValue = document.getElementById("scale-value");
@@ -58,13 +70,39 @@ layout: default
   const tempoValue = document.getElementById("tempo-value");
   const midiPlayer = document.getElementById("midi-player");
   const pdfButton = document.getElementById("pdf-button");
+  const paginationBar = document.getElementById("pagination");
+  const pageIndicator = document.getElementById("page-indicator");
+  const prevPageButton = document.getElementById("prev-page");
+  const nextPageButton = document.getElementById("next-page");
 
   function renderNotation() {
     const pageWidth = Math.round(WIDTH_WORK / currentScale);
-    vrvToolkit.setOptions({ pageWidth, scale: currentScale });
+    const pageHeight = Math.round(HEIGHT_WORK / currentScale);
+    vrvToolkit.setOptions({ pageWidth, pageHeight, scale: currentScale, breaks: "auto" });
     vrvToolkit.redoLayout();
-    document.getElementById("notation").innerHTML = vrvToolkit.renderToSVG(1);
+
+    const pageCount = vrvToolkit.getPageCount();
+    currentPage = Math.min(Math.max(currentPage, 1), pageCount);
+
+    document.getElementById("notation").innerHTML = vrvToolkit.renderToSVG(currentPage);
+
+    paginationBar.style.display = pageCount > 1 ? "flex" : "none";
+    pageIndicator.textContent = `Page ${currentPage} of ${pageCount}`;
+    prevPageButton.disabled = currentPage <= 1;
+    nextPageButton.disabled = currentPage >= pageCount;
   }
+
+  prevPageButton.addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage -= 1;
+      renderNotation();
+    }
+  });
+
+  nextPageButton.addEventListener("click", () => {
+    currentPage += 1;
+    renderNotation();
+  });
 
   function renderMidi() {
     vrvToolkit.setOptions({ midiTempoAdjustment: currentTempoPct / 100 });
