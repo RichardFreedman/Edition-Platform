@@ -136,7 +136,7 @@ layout: default
     renderMidi();
   });
 
-  verovio.module.onRuntimeInitialized = async () => {
+  async function initVerovio() {
     vrvToolkit = new verovio.toolkit();
 
     const response = await fetch(meiUrl);
@@ -148,5 +148,15 @@ layout: default
 
     document.getElementById("player-wrapper").style.display = "block";
     pdfButton.disabled = false;
-  };
+  }
+
+  // The wasm runtime can finish initializing before this script runs
+  // (timing depends on network/cache speed), in which case
+  // onRuntimeInitialized would be assigned too late and never fire.
+  // Emscripten sets calledRun once the runtime is ready, so check it first.
+  if (verovio.module.calledRun) {
+    initVerovio();
+  } else {
+    verovio.module.onRuntimeInitialized = initVerovio;
+  }
 </script>
