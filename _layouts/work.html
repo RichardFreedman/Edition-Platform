@@ -31,7 +31,7 @@ layout: default
     const meiXml = await response.text();
 
     vrvToolkit.loadData(meiXml);
-    vrvToolkit.setOptions({ pageWidth: 1200, scale: 40 });
+    vrvToolkit.setOptions({ pageWidth: 1800, scale: 60 });
 
     const svg = vrvToolkit.renderToSVG(1);
     document.getElementById("notation").innerHTML = svg;
