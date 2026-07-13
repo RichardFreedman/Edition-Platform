@@ -26,13 +26,13 @@ layout: default
   <midi-player id="midi-player" visualizer="#notation" sound-font></midi-player>
 </div>
 
-<div id="pagination" style="display: none; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+<div id="notation">Loading notation&hellip;</div>
+
+<div id="pagination" style="display: none; justify-content: center; align-items: center; gap: 0.75rem; margin-top: 0.5rem;">
   <button id="prev-page" type="button">&larr; Prev</button>
   <span id="page-indicator"></span>
   <button id="next-page" type="button">Next &rarr;</button>
 </div>
-
-<div id="notation">Loading notation&hellip;</div>
 
 <!-- Verovio: renders MEI -> SVG in the browser -->
 <script src="https://www.verovio.org/javascript/latest/verovio-toolkit-wasm.js"></script>
