@@ -7,6 +7,8 @@ layout: default
   <strong>Composer:</strong> {{ page.composer }}<br>
   <strong>Editor:</strong> {{ page.editor }}<br>
   <a href="{{ site.baseurl }}/assets/mei/{{ page.mei_file }}" download>Download MEI file</a>
+  &nbsp;|&nbsp;
+  <button id="pdf-button" type="button" disabled>Download PDF</button>
 </p>
 
 <div id="controls" style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; margin: 1rem 0; padding: 0.75rem 1rem; border: 1px solid #ddd; border-radius: 6px;">
@@ -32,6 +34,10 @@ layout: default
 <!-- html-midi-player: plays MIDI derived from the MEI, no server needed -->
 <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
 
+<!-- jsPDF + svg2pdf.js: converts Verovio's rendered SVG pages into a downloadable PDF -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js"></script>
+
 <script>
   const meiUrl = "{{ site.baseurl }}/assets/mei/{{ page.mei_file }}";
 
@@ -51,6 +57,7 @@ layout: default
   const tempoSlider = document.getElementById("tempo-slider");
   const tempoValue = document.getElementById("tempo-value");
   const midiPlayer = document.getElementById("midi-player");
+  const pdfButton = document.getElementById("pdf-button");
 
   function renderNotation() {
     const pageWidth = Math.round(WIDTH_WORK / currentScale);
@@ -68,6 +75,54 @@ layout: default
     }
     midiPlayer.src = "data:audio/midi;base64," + base64Midi;
   }
+
+  async function downloadPdf() {
+    pdfButton.disabled = true;
+    const originalLabel = pdfButton.textContent;
+    pdfButton.textContent = "Generating PDF…";
+
+    try {
+      // Render at a fixed, print-quality page size, independent of the
+      // on-screen zoom slider, and let Verovio paginate the full piece.
+      vrvToolkit.setOptions({ pageWidth: 2100, pageHeight: 2970, scale: 100, breaks: "auto" });
+      vrvToolkit.redoLayout();
+
+      const pageCount = vrvToolkit.getPageCount();
+      const { jsPDF } = window.jspdf;
+      let pdf;
+
+      for (let i = 1; i <= pageCount; i++) {
+        const container = document.createElement("div");
+        container.style.position = "absolute";
+        container.style.left = "-99999px";
+        container.innerHTML = vrvToolkit.renderToSVG(i);
+        document.body.appendChild(container);
+        const svgEl = container.querySelector("svg");
+
+        const widthPt = parseFloat(svgEl.getAttribute("width")) * 72 / 96;
+        const heightPt = parseFloat(svgEl.getAttribute("height")) * 72 / 96;
+        const orientation = widthPt > heightPt ? "landscape" : "portrait";
+
+        if (i === 1) {
+          pdf = new jsPDF({ orientation, unit: "pt", format: [widthPt, heightPt] });
+        } else {
+          pdf.addPage([widthPt, heightPt], orientation);
+        }
+        await pdf.svg(svgEl, { x: 0, y: 0, width: widthPt, height: heightPt });
+
+        document.body.removeChild(container);
+      }
+
+      pdf.save("{{ page.mei_file | remove: '.mei' }}.pdf");
+    } finally {
+      // Restore the interactive, slider-driven view.
+      renderNotation();
+      pdfButton.textContent = originalLabel;
+      pdfButton.disabled = false;
+    }
+  }
+
+  pdfButton.addEventListener("click", downloadPdf);
 
   scaleSlider.addEventListener("input", (e) => {
     currentScale = Number(e.target.value);
@@ -92,5 +147,6 @@ layout: default
     renderMidi();
 
     document.getElementById("player-wrapper").style.display = "block";
+    pdfButton.disabled = false;
   };
 </script>
